@@ -284,9 +284,27 @@ class Compiler:
             context_query.type.CopyFrom(producer_context.type)
             context_query.name.CopyFrom(producer_context.name)
 
+        elif isinstance(input_channel, types.SourceChannel):
+          # Add pipeline context query.
+          if input_channel.pipeline_name:
+            node_context_query = chnl.context_queries.add()
+            node_context_query.type.name = constants.PIPELINE_CONTEXT_TYPE_NAME
+            node_context_query.name.field_value.string_value = (
+                input_channel.pipeline_name)
+
+          # Optionally add node context query.
+          if input_channel.producer_component_id:
+            # Add node context query if `producer_component_id` is present.
+            chnl.producer_node_query.id = input_channel.producer_component_id
+            node_context_query = chnl.context_queries.add()
+            node_context_query.type.name = constants.NODE_CONTEXT_TYPE_NAME
+            node_context_query.name.field_value.string_value = "{}.{}".format(
+                input_channel.pipeline_name,
+                input_channel.producer_component_id)
         # If the node input is not an OutputChannel, fill the context queries
         # based on Channel info. We requires every channel to have pipeline
         # context and will fill it automatically.
+
         else:
           # Add pipeline context query.
           context_query = chnl.context_queries.add()
